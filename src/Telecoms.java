@@ -7,21 +7,18 @@ import java.awt.Font;
 import java.awt.Color;
 import java.awt.EventQueue;
 
+import java.awt.event.ActionListener;
 import java.sql.*;
 
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 
 public class Telecoms extends JFrame {
 
-    /**
-     *
-     */
     private static final long serialVersionUID = 1L;
     private JPanel contentPane, fieldsPanel, functionsPanel;
     private JTable table;
@@ -29,6 +26,8 @@ public class Telecoms extends JFrame {
     private JComboBox tableSelect;
     private JTextField textField, textField_1, textField_2, textField_3, textField_4;
     private JLabel tableLabel, lbl1, lbl2, lbl3, lbl4, lbl5;
+
+    private JButton btnNewButton_2, btnNewButton, btnDelete, btnNewButton_3;
 
     private Connection databaseConnection;
 
@@ -38,11 +37,6 @@ public class Telecoms extends JFrame {
     private static final String PASSWORD = "12345";
     private static final String URL = "jdbc:mysql://localhost:3306/telecommunication_companies";
 
-    int q, i, id, deleteItem;
-
-    /**
-     * Launch the application.
-     */
     public static void main(String[] args) {
 
         EventQueue.invokeLater(() -> {
@@ -55,9 +49,6 @@ public class Telecoms extends JFrame {
         });
     }
 
-    /**
-     * Create the frame.
-     */
     public Telecoms() throws SQLException {
         setTitle("\u0424\u041E\u041D\u041E\u0422\u0415\u041A\u0410");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -91,31 +82,9 @@ public class Telecoms extends JFrame {
         currentTable = Table.valueOf(Objects.requireNonNull(tableSelect.getSelectedItem()).toString().toUpperCase());
 
         var query = new StringBuilder("select * from " + currentTable.name());
-        var additional = false;
-        var restrictions = new HashMap<String, String>();
+        var restrictions = getRestrictions();
 
-        if (lbl1.getText() != null && !textField.getText().trim().isBlank()) {
-            additional = true;
-            restrictions.put(currentTable.column_1, textField.getText().trim());
-        }
-        if (lbl2.getText() !=null && !textField_1.getText().trim().isBlank()) {
-            additional = true;
-            restrictions.put(currentTable.column_2, textField_1.getText().trim());
-        }
-        if (lbl3.getText() != null && !textField_2.getText().trim().isBlank()) {
-            additional = true;
-            restrictions.put(currentTable.column_3, textField_2.getText().trim());
-        }
-        if (lbl4.getText() != null && !textField_3.getText().trim().isBlank()) {
-            additional = true;
-            restrictions.put(currentTable.column_4, textField_3.getText().trim());
-        }
-        if (lbl5.getText() != null && !textField_4.getText().trim().isBlank()) {
-            additional = true;
-            restrictions.put(currentTable.column_5, textField_4.getText().trim());
-        }
-
-        if (additional) {
+        if (!restrictions.isEmpty()) {
             query
                     .append(" where ")
                     .append(restrictions.entrySet()
@@ -129,6 +98,7 @@ public class Telecoms extends JFrame {
 
             displayTableContent(statement.executeQuery());
             updateFields();
+            emptyFields();
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(null, ex.getMessage());
         }
@@ -140,7 +110,6 @@ public class Telecoms extends JFrame {
         lbl3.setText(currentTable.column_3);
         lbl4.setText(currentTable.column_4);
         lbl5.setText(currentTable.column_5);
-
     }
 
     private void initializeFields() {
@@ -162,7 +131,7 @@ public class Telecoms extends JFrame {
         tableSelect.setBounds(103, 10, 161, 32);
         if (currentTable == null) {
             tableSelect.setSelectedIndex(0);
-            currentTable=Table.valueOf(Objects.requireNonNull(tableSelect.getSelectedItem()).toString().toUpperCase());
+            currentTable = Table.valueOf(Objects.requireNonNull(tableSelect.getSelectedItem()).toString().toUpperCase());
         }
         fieldsPanel.add(tableSelect);
 
@@ -276,28 +245,31 @@ public class Telecoms extends JFrame {
         contentPane.add(functionsPanel);
         functionsPanel.setLayout(null);
 
-        JButton btnNewButton = new JButton("ADD");
-        btnNewButton.addActionListener(e->{
+        btnNewButton = new JButton("ADD");
+        btnNewButton.addActionListener(e -> {
             addFunctionality();
         });
         btnNewButton.setFont(new Font("Tahoma", Font.BOLD | Font.ITALIC, 14));
         btnNewButton.setBounds(10, 20, 151, 30);
         functionsPanel.add(btnNewButton);
 
-        JButton btnDelete = new JButton("DELETE");
-        btnDelete.addActionListener(e->{
+        btnDelete = new JButton("DELETE");
+        btnDelete.addActionListener(e -> {
             deleteFunctionality();
         });
         btnDelete.setFont(new Font("Tahoma", Font.BOLD | Font.ITALIC, 14));
         btnDelete.setBounds(10, 74, 151, 30);
         functionsPanel.add(btnDelete);
 
-        JButton btnNewButton_2 = new JButton("UPDATE");
+        btnNewButton_2 = new JButton("UPDATE/SELECT");
+        btnNewButton_2.addActionListener(e -> {
+            updateFunctionality();
+        });
         btnNewButton_2.setFont(new Font("Tahoma", Font.BOLD | Font.ITALIC, 14));
         btnNewButton_2.setBounds(10, 128, 151, 30);
         functionsPanel.add(btnNewButton_2);
 
-        JButton btnNewButton_3 = new JButton("SELECT");
+        btnNewButton_3 = new JButton("SELECT");
         btnNewButton_3.addActionListener(e -> {
             selectFunctionality();
         });
@@ -306,35 +278,65 @@ public class Telecoms extends JFrame {
         functionsPanel.add(btnNewButton_3);
     }
 
+    private void updateFunctionality() {
+        var restrictions = getRestrictions();
+        selectFunctionality();
+        for (ActionListener al : btnNewButton_2.getActionListeners()) {
+            btnNewButton_2.removeActionListener(al);
+        }
+        btnNewButton_2.addActionListener(e -> {
+            updateRows(restrictions);
+        });
+        btnNewButton_2.setText("UPDATE/CHANGE");
+        btnNewButton_2.revalidate();
+    }
+
+    private void updateRows(HashMap<String, String> restrictions) {
+        btnNewButton_2.setText("UPDATE/SELECT");
+        btnNewButton_2.repaint();
+
+        currentTable = Table.valueOf(Objects.requireNonNull(tableSelect.getSelectedItem()).toString().toUpperCase());
+
+        var query = new StringBuilder("update " + currentTable.name());
+        var values = getRestrictions();
+
+
+        if (!values.isEmpty()) {
+            query
+                    .append(" set ")
+                    .append(values.entrySet()
+                            .stream()
+                            .map(r -> String.format(" `%s` = '%s' ", r.getKey(), r.getValue()))
+                            .collect(Collectors.joining(", ")))
+                    .append(" where ")
+                    .append(restrictions.entrySet()
+                            .stream()
+                            .map(r -> String.format(" `%s` like '%%%s%%' ", r.getKey(), r.getValue()))
+                            .collect(Collectors.joining("and")));
+        }
+
+        try {
+            var statement = databaseConnection.prepareStatement(query.toString());
+            statement.executeUpdate();
+            emptyFields();
+            for (ActionListener al : btnNewButton_2.getActionListeners()) {
+                btnNewButton_2.removeActionListener(al);
+            }
+            btnNewButton_2.addActionListener(e -> {
+                updateFunctionality();
+            });
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(null, ex.getMessage());
+        }
+    }
+
     private void deleteFunctionality() {
         currentTable = Table.valueOf(Objects.requireNonNull(tableSelect.getSelectedItem()).toString().toUpperCase());
 
         var query = new StringBuilder("delete from " + currentTable.name());
-        var additional = false;
-        var restrictions = new HashMap<String, String>();
+        var restrictions = getRestrictions();
 
-        if (lbl1.getText() != null && !textField.getText().trim().isBlank()) {
-            additional = true;
-            restrictions.put(currentTable.column_1, textField.getText().trim());
-        }
-        if (lbl2.getText() !=null && !textField_1.getText().trim().isBlank()) {
-            additional = true;
-            restrictions.put(currentTable.column_2, textField_1.getText().trim());
-        }
-        if (lbl3.getText() != null && !textField_2.getText().trim().isBlank()) {
-            additional = true;
-            restrictions.put(currentTable.column_3, textField_2.getText().trim());
-        }
-        if (lbl4.getText() != null && !textField_3.getText().trim().isBlank()) {
-            additional = true;
-            restrictions.put(currentTable.column_4, textField_3.getText().trim());
-        }
-        if (lbl5.getText() != null && !textField_4.getText().trim().isBlank()) {
-            additional = true;
-            restrictions.put(currentTable.column_5, textField_4.getText().trim());
-        }
-
-        if (additional) {
+        if (!restrictions.isEmpty()) {
             query
                     .append(" where ")
                     .append(restrictions.entrySet()
@@ -355,39 +357,16 @@ public class Telecoms extends JFrame {
     private void addFunctionality() {
         currentTable = Table.valueOf(Objects.requireNonNull(tableSelect.getSelectedItem()).toString().toUpperCase());
 
-
-        var additional = false;
-        var restrictions = new LinkedHashMap<String, String>();
-
-        if (lbl1.getText() != null && !textField.getText().trim().isBlank()) {
-            additional = true;
-            restrictions.put(currentTable.column_1, textField.getText().trim());
-        }
-        if (lbl2.getText() !=null && !textField_1.getText().trim().isBlank()) {
-            additional = true;
-            restrictions.put(currentTable.column_2, textField_1.getText().trim());
-        }
-        if (lbl3.getText() != null && !textField_2.getText().trim().isBlank()) {
-            additional = true;
-            restrictions.put(currentTable.column_3, textField_2.getText().trim());
-        }
-        if (lbl4.getText() != null && !textField_3.getText().trim().isBlank()) {
-            additional = true;
-            restrictions.put(currentTable.column_4, textField_3.getText().trim());
-        }
-        if (lbl5.getText() != null && !textField_4.getText().trim().isBlank()) {
-            additional = true;
-            restrictions.put(currentTable.column_5, textField_4.getText().trim());
-        }
+        var restrictions = getRestrictions();
 
         var query = new StringBuilder("insert into " + currentTable.name());
 
-        if (additional) {
+        if (!restrictions.isEmpty()) {
             query
                     .append("(")
                     .append(restrictions.keySet()
                             .stream()
-                            .map(s->String.format("`%s`", s))
+                            .map(s -> String.format("`%s`", s))
                             .collect(Collectors.joining(", ")))
                     .append(")")
                     .append(" values (")
@@ -407,12 +386,34 @@ public class Telecoms extends JFrame {
         }
     }
 
-    private void emptyFields(){
+    private void emptyFields() {
         textField.setText("");
         textField_1.setText("");
         textField_2.setText("");
         textField_3.setText("");
         textField_4.setText("");
+    }
+
+    private HashMap<String, String> getRestrictions() {
+        var restrictions = new HashMap<String, String>();
+
+        if (lbl1.getText() != null && !textField.getText().trim().isBlank()) {
+            restrictions.put(currentTable.column_1, textField.getText().trim());
+        }
+        if (lbl2.getText() != null && !textField_1.getText().trim().isBlank()) {
+            restrictions.put(currentTable.column_2, textField_1.getText().trim());
+        }
+        if (lbl3.getText() != null && !textField_2.getText().trim().isBlank()) {
+            restrictions.put(currentTable.column_3, textField_2.getText().trim());
+        }
+        if (lbl4.getText() != null && !textField_3.getText().trim().isBlank()) {
+            restrictions.put(currentTable.column_4, textField_3.getText().trim());
+        }
+        if (lbl5.getText() != null && !textField_4.getText().trim().isBlank()) {
+            restrictions.put(currentTable.column_5, textField_4.getText().trim());
+        }
+
+        return restrictions;
     }
 }
 
