@@ -12,6 +12,7 @@ import java.sql.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -84,57 +85,53 @@ public class Telecoms extends JFrame {
         addFunctionButtons();
 
 
-        JButton btnNewButton_3 = new JButton("SELECT");
-        btnNewButton_3.addActionListener(e -> {
+    }
 
-            currentTable = Table.valueOf(Objects.requireNonNull(tableSelect.getSelectedItem()).toString().toUpperCase());
+    private void selectFunctionality() {
+        currentTable = Table.valueOf(Objects.requireNonNull(tableSelect.getSelectedItem()).toString().toUpperCase());
 
-            var query = new StringBuilder("select * from " + currentTable.name());
-            var additional = false;
-            var restrictions = new HashMap<String, String>();
+        var query = new StringBuilder("select * from " + currentTable.name());
+        var additional = false;
+        var restrictions = new HashMap<String, String>();
 
-            if (lbl1.getText() != null && !textField.getText().trim().isBlank()) {
-                additional = true;
-                restrictions.put(currentTable.column_1, textField.getText().trim());
-            }
-            if (lbl2.getText() !=null && !textField_1.getText().trim().isBlank()) {
-                additional = true;
-                restrictions.put(currentTable.column_2, textField_1.getText().trim());
-            }
-            if (lbl3.getText() != null && !textField_2.getText().trim().isBlank()) {
-                additional = true;
-                restrictions.put(currentTable.column_3, textField_2.getText().trim());
-            }
-            if (lbl4.getText() != null && !textField_3.getText().trim().isBlank()) {
-                additional = true;
-                restrictions.put(currentTable.column_4, textField_3.getText().trim());
-            }
-            if (lbl5.getText() != null && !textField_4.getText().trim().isBlank()) {
-                additional = true;
-                restrictions.put(currentTable.column_5, textField_4.getText().trim());
-            }
+        if (lbl1.getText() != null && !textField.getText().trim().isBlank()) {
+            additional = true;
+            restrictions.put(currentTable.column_1, textField.getText().trim());
+        }
+        if (lbl2.getText() !=null && !textField_1.getText().trim().isBlank()) {
+            additional = true;
+            restrictions.put(currentTable.column_2, textField_1.getText().trim());
+        }
+        if (lbl3.getText() != null && !textField_2.getText().trim().isBlank()) {
+            additional = true;
+            restrictions.put(currentTable.column_3, textField_2.getText().trim());
+        }
+        if (lbl4.getText() != null && !textField_3.getText().trim().isBlank()) {
+            additional = true;
+            restrictions.put(currentTable.column_4, textField_3.getText().trim());
+        }
+        if (lbl5.getText() != null && !textField_4.getText().trim().isBlank()) {
+            additional = true;
+            restrictions.put(currentTable.column_5, textField_4.getText().trim());
+        }
 
-            if (additional) {
-                query
-                        .append(" where ")
-                        .append(restrictions.entrySet()
-                                .stream()
-                                .map(r -> String.format(" `%s` like '%%%s%%' ", r.getKey(), r.getValue()))
-                                .collect(Collectors.joining("and")));
-            }
+        if (additional) {
+            query
+                    .append(" where ")
+                    .append(restrictions.entrySet()
+                            .stream()
+                            .map(r -> String.format(" `%s` like '%%%s%%' ", r.getKey(), r.getValue()))
+                            .collect(Collectors.joining("and")));
+        }
 
-            try {
-                var statement = databaseConnection.prepareStatement(query.toString());
+        try {
+            var statement = databaseConnection.prepareStatement(query.toString());
 
-                displayTableContent(statement.executeQuery());
-                updateFields();
-            } catch (SQLException ex) {
-                throw new RuntimeException(ex);
-            }
-        });
-        btnNewButton_3.setFont(new Font("Tahoma", Font.BOLD | Font.ITALIC, 14));
-        btnNewButton_3.setBounds(10, 181, 151, 30);
-        functionsPanel.add(btnNewButton_3);
+            displayTableContent(statement.executeQuery());
+            updateFields();
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(null, ex.getMessage());
+        }
     }
 
     private void updateFields() {
@@ -280,6 +277,9 @@ public class Telecoms extends JFrame {
         functionsPanel.setLayout(null);
 
         JButton btnNewButton = new JButton("ADD");
+        btnNewButton.addActionListener(e->{
+            addFunctionality();
+        });
         btnNewButton.setFont(new Font("Tahoma", Font.BOLD | Font.ITALIC, 14));
         btnNewButton.setBounds(10, 20, 151, 30);
         functionsPanel.add(btnNewButton);
@@ -293,6 +293,77 @@ public class Telecoms extends JFrame {
         btnNewButton_2.setFont(new Font("Tahoma", Font.BOLD | Font.ITALIC, 14));
         btnNewButton_2.setBounds(10, 128, 151, 30);
         functionsPanel.add(btnNewButton_2);
+
+        JButton btnNewButton_3 = new JButton("SELECT");
+        btnNewButton_3.addActionListener(e -> {
+            selectFunctionality();
+        });
+        btnNewButton_3.setFont(new Font("Tahoma", Font.BOLD | Font.ITALIC, 14));
+        btnNewButton_3.setBounds(10, 181, 151, 30);
+        functionsPanel.add(btnNewButton_3);
+    }
+
+    private void addFunctionality() {
+        currentTable = Table.valueOf(Objects.requireNonNull(tableSelect.getSelectedItem()).toString().toUpperCase());
+
+
+        var additional = false;
+        var restrictions = new LinkedHashMap<String, String>();
+
+        if (lbl1.getText() != null && !textField.getText().trim().isBlank()) {
+            additional = true;
+            restrictions.put(currentTable.column_1, textField.getText().trim());
+        }
+        if (lbl2.getText() !=null && !textField_1.getText().trim().isBlank()) {
+            additional = true;
+            restrictions.put(currentTable.column_2, textField_1.getText().trim());
+        }
+        if (lbl3.getText() != null && !textField_2.getText().trim().isBlank()) {
+            additional = true;
+            restrictions.put(currentTable.column_3, textField_2.getText().trim());
+        }
+        if (lbl4.getText() != null && !textField_3.getText().trim().isBlank()) {
+            additional = true;
+            restrictions.put(currentTable.column_4, textField_3.getText().trim());
+        }
+        if (lbl5.getText() != null && !textField_4.getText().trim().isBlank()) {
+            additional = true;
+            restrictions.put(currentTable.column_5, textField_4.getText().trim());
+        }
+
+        var query = new StringBuilder("insert into " + currentTable.name());
+
+        if (additional) {
+            query
+                    .append("(")
+                    .append(restrictions.keySet()
+                            .stream()
+                            .map(s->String.format("`%s`", s))
+                            .collect(Collectors.joining(", ")))
+                    .append(")")
+                    .append(" values (")
+                    .append(restrictions.values()
+                            .stream()
+                            .map(s -> String.format("'%s'", s))
+                            .collect(Collectors.joining(", ")))
+                    .append(")");
+        }
+
+        try {
+            var statement = databaseConnection.prepareStatement(query.toString());
+            statement.executeUpdate();
+            emptyFields();
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(null, ex.getMessage());
+        }
+    }
+
+    private void emptyFields(){
+        textField.setText("");
+        textField_1.setText("");
+        textField_2.setText("");
+        textField_3.setText("");
+        textField_4.setText("");
     }
 }
 
