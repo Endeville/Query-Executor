@@ -285,6 +285,9 @@ public class Telecoms extends JFrame {
         functionsPanel.add(btnNewButton);
 
         JButton btnDelete = new JButton("DELETE");
+        btnDelete.addActionListener(e->{
+            deleteFunctionality();
+        });
         btnDelete.setFont(new Font("Tahoma", Font.BOLD | Font.ITALIC, 14));
         btnDelete.setBounds(10, 74, 151, 30);
         functionsPanel.add(btnDelete);
@@ -301,6 +304,52 @@ public class Telecoms extends JFrame {
         btnNewButton_3.setFont(new Font("Tahoma", Font.BOLD | Font.ITALIC, 14));
         btnNewButton_3.setBounds(10, 181, 151, 30);
         functionsPanel.add(btnNewButton_3);
+    }
+
+    private void deleteFunctionality() {
+        currentTable = Table.valueOf(Objects.requireNonNull(tableSelect.getSelectedItem()).toString().toUpperCase());
+
+        var query = new StringBuilder("delete from " + currentTable.name());
+        var additional = false;
+        var restrictions = new HashMap<String, String>();
+
+        if (lbl1.getText() != null && !textField.getText().trim().isBlank()) {
+            additional = true;
+            restrictions.put(currentTable.column_1, textField.getText().trim());
+        }
+        if (lbl2.getText() !=null && !textField_1.getText().trim().isBlank()) {
+            additional = true;
+            restrictions.put(currentTable.column_2, textField_1.getText().trim());
+        }
+        if (lbl3.getText() != null && !textField_2.getText().trim().isBlank()) {
+            additional = true;
+            restrictions.put(currentTable.column_3, textField_2.getText().trim());
+        }
+        if (lbl4.getText() != null && !textField_3.getText().trim().isBlank()) {
+            additional = true;
+            restrictions.put(currentTable.column_4, textField_3.getText().trim());
+        }
+        if (lbl5.getText() != null && !textField_4.getText().trim().isBlank()) {
+            additional = true;
+            restrictions.put(currentTable.column_5, textField_4.getText().trim());
+        }
+
+        if (additional) {
+            query
+                    .append(" where ")
+                    .append(restrictions.entrySet()
+                            .stream()
+                            .map(r -> String.format(" `%s` like '%%%s%%' ", r.getKey(), r.getValue()))
+                            .collect(Collectors.joining("and")));
+        }
+
+        try {
+            var statement = databaseConnection.prepareStatement(query.toString());
+            statement.executeUpdate();
+            emptyFields();
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(null, ex.getMessage());
+        }
     }
 
     private void addFunctionality() {
